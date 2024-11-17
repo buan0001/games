@@ -1,25 +1,44 @@
-
-body{
-    background-color: azure;
-    text-align: center;
-    justify-content: center;
-    display: grid;
-    margin: 0;
+body {
+  background-color: azure;
+  text-align: center;
+  justify-content: center;
+  display: grid;
+  margin: 0;
 }
 
-#gameField{
-    border: 2px green solid;
-    width: 320px;
-    height: 320px;
-    background-color: grey;
+#gameField {
+  border: 2px green solid;
+  width: 320px;
+  height: 320px;
+  background-color: grey;
+}
+
+#player {
+  width: 32px;
+  height: 40px;
+  background-image: url("./images/Character.png");
+  background-size: 400%;
+  image-rendering: pixelated;
+  background-color: yellow;
 
 }
 
-#player{
-    width: 32px;
-    height: 40px;
-    background-image: url("./images/Character\ 5.png");
-    background-size: 400%;
-    /* background-position: 32px; */
-    image-rendering: pixelated;
+@keyframes damage-animation {
+    from {background-color: red;}
+    to {background-color: black;}
+}
+
+.damage{
+    animation-name: damage-animation;
+    animation-duration: 2s;
+    animation-iteration-count: 1;
+}
+
+#enemy {
+  width: 48px;
+  height: 48px;
+  background-image: url("./images/ghost.png");
+  background-size: 700%;
+  background-color: green;
+  image-rendering: pixelated;
 }
