@@ -1,16 +1,11 @@
 window.addEventListener("load", start);
 
+// ========================= GLOBALS ===============================
 const controls = {
   up: false,
   down: false,
   left: false,
   right: false,
-};
-
-const animationStuff = {
-  characterDirection: 0,
-  walkCycle: 0,
-  walkDir: 0,
 };
 
 const boardInfo = { left: 0, right: 320, top: 0, bottom: 320 };
@@ -20,38 +15,49 @@ const playerInfo = {
   y: 0,
   width: 32,
   height: 40,
-  speed: 20,
+  speed: 40,
   DOMNode: document.querySelector("#player"),
+  animationStuff: {
+    characterDirection: 0,
+    walkTick: 0,
+    walkCycle: 0,
+    animationAvailable: true,
+  },
 };
 
-const ghostEnemy = {
+const enemy = {
   x: 150,
   y: 150,
-  width: 48,
-  height: 48,
-  speed: 5,
-  direction: -1,
+  width: 32,
+  height: 40,
+  speed: 25,
+
   DOMNode: document.querySelector("#enemy"),
+  animationStuff: {
+    characterDirection: 2,
+    walkTick: 0,
+    walkCycle: 0,
+  },
 };
 
-const playerNode = document.querySelector("#player");
-const gameGrid = document.querySelector("#gameField");
+// ========================= END OF GLOBALS ===============================
 
 function start() {
-  console.log("js running");
+  setEventListeners();
+  requestAnimationFrame(tick);
+}
+
+function setEventListeners() {
   window.addEventListener("keydown", keyPressed);
   window.addEventListener("keyup", keyPressed);
-  requestAnimationFrame(tick);
-  // const circle1 = { x: 50, y: 100, r: 30 };
-  // const circle2 = { x: 80, y: 120, r: 20 };
-  // const startNodeSize = playerNode.getBoundingClientRect();
-  // console.log(startNodeSize);
-
-  // (playerInfo.x = startNodeSize.x),
-  //   (playerInfo.y = startNodeSize.y),
-  //   (playerInfo.leftRightDiff = startNodeSize.right - startNodeSize.left),
-  //   (playerInfo.topBottomDiff = startNodeSize.bottom - startNodeSize.top),
-  //   canMove(playerInfo, { x: 200, y: 100 });
+  playerInfo.DOMNode.addEventListener("animationend", e => {
+    if (e.animationName == "damage-animation") {
+      playerInfo.DOMNode.classList.remove("damage");
+      setTimeout(() => {
+        playerInfo.animationStuff.animationAvailable = true;
+      }, 50);
+    }
+  });
 }
 
 let prevTime = 0;
@@ -62,25 +68,32 @@ function tick(time) {
   prevTime = time;
 
   movePlayer(deltaTime);
-  moveEnemy(deltaTime);
   displayPlayer();
-  checkIfCharactersCollide(playerInfo, ghostEnemy);
+  moveAndDisplayEnemy(deltaTime);
+
+  if (charactersColliding(playerInfo, enemy)) {
+    if (playerInfo.animationStuff.animationAvailable) {
+      playerInfo.animationStuff.animationAvailable = false;
+      playerInfo.DOMNode.classList.add("damage");
+    }
+  }
 }
 
 function displayPlayer() {
-  // console.log(playerInfo);
-
+  // Only progress the walking if there's input to move to
   if (controls.up || controls.down || controls.left || controls.right) {
-    animationStuff.walkCycle++;
-    if (animationStuff.walkCycle == 10) {
-      animationStuff.walkDir++;
-      animationStuff.walkCycle = 0;
+    playerInfo.animationStuff.walkTick++;
+    if (playerInfo.animationStuff.walkTick == 10) {
+      playerInfo.animationStuff.walkCycle++;
+      playerInfo.animationStuff.walkTick = 0;
     }
-    playerNode.style.translate = `${playerInfo.x}px ${playerInfo.y}px`;
+    playerInfo.DOMNode.style.translate = `${playerInfo.x}px ${playerInfo.y}px`;
   } else {
-    animationStuff.walkDir = 0;
+    playerInfo.animationStuff.walkCycle = 0;
   }
-  playerNode.style.backgroundPosition = `${animationStuff.walkDir * 100}% ${animationStuff.characterDirection * 100}%`;
+  playerInfo.DOMNode.style.backgroundPosition = `${playerInfo.animationStuff.walkCycle * 100}% ${
+    playerInfo.animationStuff.characterDirection * 100
+  }%`;
 }
 
 function movePlayer(deltaTime) {
@@ -89,21 +102,21 @@ function movePlayer(deltaTime) {
   const movement = playerInfo.speed / deltaTime;
   const tempMove = { x: playerInfo.x, y: playerInfo.y };
   if (controls.down) {
-    animationStuff.characterDirection = 0;
+    playerInfo.animationStuff.characterDirection = 0;
     // playerInfo.y = playerInfo.y + movement;
     tempMove.y = playerInfo.y + movement;
   } else if (controls.up) {
-    animationStuff.characterDirection = 3;
+    playerInfo.animationStuff.characterDirection = 3;
     // playerInfo.y = playerInfo.y - movement;
     tempMove.y = playerInfo.y - movement;
   }
   if (controls.left) {
-    animationStuff.characterDirection = 2;
+    playerInfo.animationStuff.characterDirection = 2;
     // playerInfo.x = playerInfo.x - movement;
     tempMove.x = playerInfo.x - movement;
   }
   if (controls.right) {
-    animationStuff.characterDirection = 1;
+    playerInfo.animationStuff.characterDirection = 1;
     // playerInfo.x = playerInfo.x + movement;
     tempMove.x = playerInfo.x + movement;
   }
@@ -114,68 +127,47 @@ function movePlayer(deltaTime) {
   }
 }
 
-function moveEnemy(deltaTime) {
-  const distance = ghostEnemy.speed / deltaTime;
-  if (ghostEnemy.x > 200) {
-    ghostEnemy.direction = -1;
-    ghostEnemy.DOMNode.style.backgroundPosition = `0%`;
-  } else if (ghostEnemy.x < 100) {
-    ghostEnemy.direction = 1;
-    ghostEnemy.DOMNode.style.backgroundPosition = `100%`;
+function moveAndDisplayEnemy(deltaTime) {
+  let distance = enemy.speed / deltaTime;
+  // Change directions at certain spots
+  if (enemy.x > boardInfo.right - 30) {
+    enemy.animationStuff.characterDirection = 2;
+  } else if (enemy.x < boardInfo.left + 30) {
+    enemy.animationStuff.characterDirection = 1;
   }
-  ghostEnemy.x += distance * ghostEnemy.direction;
-  // console.log(ghostEnemy.y);
-  
-  ghostEnemy.DOMNode.style.translate = `${ghostEnemy.x}px ${ghostEnemy.y}px`;
+  // Calm down the walking cycle
+  // (6 times every second instead of 60
+  // (or more, depending on refresh rate of the users monitor))
+  enemy.animationStuff.walkTick++;
+  if (enemy.animationStuff.walkTick > 10) {
+    enemy.animationStuff.walkCycle++;
+    enemy.animationStuff.walkTick = 0;
+  }
+  distance *= enemy.animationStuff.characterDirection == 2 ? -1 : 1;
+  enemy.x += distance;
+  // Walking animation
+  enemy.DOMNode.style.backgroundPosition = `${enemy.animationStuff.walkCycle * 100}% ${enemy.animationStuff.characterDirection * 100}%`;
+  // Actually changing the x and y positions
+  enemy.DOMNode.style.translate = `${enemy.x}px ${enemy.y}px`;
 }
 
 function canMove(character, newPos) {
-  // Simple collision detection for two rectangles
-  if (boardInfo.top > newPos.y || boardInfo.bottom < playerInfo.height + newPos.y || boardInfo.left > newPos.x || boardInfo.right < playerInfo.width + newPos.x) {
-    return false;
-  }
-  return true;
+  // Checking if the character's new position is colliding with terrain (by exceeding the borders)
+  // Possible addition: Make character attributes able to determine what is a legit coordinate
+  return (
+    boardInfo.top > newPos.y ||
+    boardInfo.bottom < playerInfo.height + newPos.y ||
+    boardInfo.left > newPos.x ||
+    boardInfo.right < playerInfo.width + newPos.x
+  );
 }
 
-function checkIfCharactersCollide(player, enemy) {
-  //   const playerInfo = {
-  //   x: 0,
-  //   y: 0,
-  //   width: 32,
-  //   height: 40,
-  //   speed: 20,
-  //   DOMNode: document.querySelector("#player"),
-  // };
-
-  // const ghostEnemy = {
-  //   x: 150,
-  //   y: 150,
-  //   width: 48,
-  //   height: 48,
-  //   speed: 5,
-  //   direction: -1,
-  //   DOMNode: document.querySelector("#enemy"),
-  // };
-  // console.log(player, enemy);
+function charactersColliding(player, enemy) {
   const playerRightToTheRightOfEnemyLeft = player.x + player.width >= enemy.x;
   const playerLeftToTheLeftOfEnemyRight = player.x <= enemy.x + enemy.width;
   const playerTopAboveEnemyBot = player.y < enemy.y + enemy.height;
   const playerBotBelowEnemyTop = player.y + player.height > enemy.y;
-  // console.log(playerTopAboveEnemyBot, playerBotBelowEnemyTop);
-  // Start: 69, 0, 150
-  console.log(player.DOMNode.getBoundingClientRect().y, player.y, ghostEnemy.y, ghostEnemy.DOMNode.getBoundingClientRect().y);
-
-  // console.log("player to left",playerRightToTheRightOfEnemyLeft, playerLeftToTheLeftOfEnemyRight, playerTopAboveEnemyBot, playerBotBelowEnemyTop);
-
-  if (playerRightToTheRightOfEnemyLeft && playerLeftToTheLeftOfEnemyRight && playerTopAboveEnemyBot && playerBotBelowEnemyTop) {
-    // if (player.x + player.width >= enemy.x && player.x <= enemy.x + enemy.width && player.y + player.height >= enemy.y && player.y <= enemy.y + enemy.height) {
-    // console.log("Colliding!");
-    player.DOMNode.classList.add("damage");
-    return true;
-  }
-  // console.log("not colliding");
-player.DOMNode.classList.remove("damage");
-  return false;
+  return playerRightToTheRightOfEnemyLeft && playerLeftToTheLeftOfEnemyRight && playerTopAboveEnemyBot && playerBotBelowEnemyTop;
 }
 
 const validInput = ["w", "a", "s", "d"];

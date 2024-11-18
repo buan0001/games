@@ -8,9 +8,11 @@ body {
 
 #gameField {
   border: 2px green solid;
+  /* width: 960px;
+  height: 960px; */
   width: 320px;
   height: 320px;
-  background-color: grey;
+  background-color: rgb(227, 183, 183);
 }
 
 #player {
@@ -19,26 +21,35 @@ body {
   background-image: url("./images/Character.png");
   background-size: 400%;
   image-rendering: pixelated;
-  background-color: yellow;
-
+  /* background-color: yellow; */
+  position: absolute;
 }
 
 @keyframes damage-animation {
-    from {background-color: red;}
-    to {background-color: black;}
+  0% {
+    opacity: 1;
+  }
+  
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .damage{
     animation-name: damage-animation;
-    animation-duration: 2s;
-    animation-iteration-count: 1;
+    animation-duration: 0.2s;
+    animation-iteration-count: 5;
 }
 
 #enemy {
-  width: 48px;
-  height: 48px;
-  background-image: url("./images/ghost.png");
-  background-size: 700%;
-  background-color: green;
+  width: 32px;
+  height: 40px;
+  background-image: url("./images/enemy.png");
+  background-size: 400%;
+  /* background-color: green; */
   image-rendering: pixelated;
+  position: absolute;
 }
