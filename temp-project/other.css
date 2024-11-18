@@ -1,66 +1,22 @@
 body {
-  background-color: rgb(178, 238, 238);
+  display: grid;
+  /* display: flex; */
   text-align: center;
   justify-content: center;
-  display: grid;
-  margin: 0;
+  background-color: bisque;
 }
-
-
-#player {
-  width: 32px;
-  height: 40px;
-  aspect-ratio: 16/20;
-  background-image: url("./assets/images/Character.png");
-  background-size: 400%;
-  image-rendering: pixelated;
-  background-color: yellow;
-  /* background-color:transparent; */
-  position: absolute;
-}
-
-@keyframes damage-animation {
-  0% {
-    opacity: 1;
-  }
-  
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.damage{
-    animation-name: damage-animation;
-    animation-duration: 0.2s;
-    animation-iteration-count: 5;
-}
-
-#enemy {
-  width: 32px;
-  height: 40px;
-  background-image: url("./assets/images/enemy.png");
-  background-size: 400%;
-  /* background-color: green; */
-  image-rendering: pixelated;
-  position: absolute;
-}
-
 
 #gameField {
   width: fit-content;
+  /* width: 600px;
+    height: 400px; */
   border: 1px green solid;
-  position: absolute;
-  
 }
 
 #background {
   /* grid-template-columns: repeat(10, max-content); */
   grid-template-columns: repeat(var(--GRID-WIDTH), max-content);
   display: grid;
-  position: absolute;
 }
 
 .tile {

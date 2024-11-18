@@ -8,9 +8,7 @@ const controls = {
   right: false,
 };
 
-const boardInfo = { left: 0, right: 320, top: 0, bottom: 320 };
-
-const playerInfo = {
+const player = {
   x: 0,
   y: 0,
   width: 32,
@@ -28,6 +26,8 @@ const playerInfo = {
 const enemy = {
   x: 150,
   y: 150,
+  // width: 64,
+  // height: 80,
   width: 32,
   height: 40,
   speed: 25,
@@ -40,21 +40,61 @@ const enemy = {
   },
 };
 
+const tiles = [
+  [6, 1, 8, 6, 0, 3, 3, 3, 3, 8],
+  [0, 1, 1, 1, 1, 3, 7, 7, 3, 6],
+  [8, 0, 6, 0, 1, 3, 3, 4, 3, 0],
+  [2, 2, 2, 0, 1, 1, 1, 1, 1, 1],
+  [0, 6, 2, 8, 1, 0, 6, 0, 9, 1],
+  [2, 2, 2, 2, 5, 2, 2, 2, 1, 1],
+  [5, 5, 5, 5, 5, 2, 8, 0, 1, 8],
+  [2, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+  [6, 2, 2, 6, 0, 8, 0, 2, 0, 1],
+  [0, 2, 0, 0, 6, 0, 6, 2, 0, 1],
+];
+
+const GRID_HEIGHT = tiles.length;
+const GRID_WIDTH = tiles[0].length;
+const TILE_SIZE = 64;
+
+const boardInfo = { left: 0, right: GRID_WIDTH * TILE_SIZE, top: 0, bottom: GRID_HEIGHT * TILE_SIZE };
+
 // ========================= END OF GLOBALS ===============================
 
 function start() {
   setEventListeners();
+  createTiles(GRID_HEIGHT, GRID_WIDTH, TILE_SIZE);
+  displayTiles(tiles, GRID_WIDTH);
+  setSizes();
+
   requestAnimationFrame(tick);
+}
+
+function setSizes() {
+  enemy.DOMNode.style.width = enemy.width + "px";
+  enemy.DOMNode.style.height = enemy.height + "px";
+
+  player.DOMNode.style.width = player.width + "px";
+  player.DOMNode.style.backgroundColor = "transparent";
+  player.DOMNode.style.height = player.height + "px";
+  const visualBoard = document.querySelector("#background").getBoundingClientRect();
+
+  console.log(GRID_HEIGHT, GRID_WIDTH);
+  
+  boardInfo.left = visualBoard.left;
+  boardInfo.right = visualBoard.right;
+  boardInfo.top = visualBoard.top;
+  boardInfo.bottom = visualBoard.bottom;
 }
 
 function setEventListeners() {
   window.addEventListener("keydown", keyPressed);
   window.addEventListener("keyup", keyPressed);
-  playerInfo.DOMNode.addEventListener("animationend", e => {
+  player.DOMNode.addEventListener("animationend", e => {
     if (e.animationName == "damage-animation") {
-      playerInfo.DOMNode.classList.remove("damage");
+      player.DOMNode.classList.remove("damage");
       setTimeout(() => {
-        playerInfo.animationStuff.animationAvailable = true;
+        player.animationStuff.animationAvailable = true;
       }, 50);
     }
   });
@@ -71,59 +111,71 @@ function tick(time) {
   displayPlayer();
   moveAndDisplayEnemy(deltaTime);
 
-  if (charactersColliding(playerInfo, enemy)) {
-    if (playerInfo.animationStuff.animationAvailable) {
-      playerInfo.animationStuff.animationAvailable = false;
-      playerInfo.DOMNode.classList.add("damage");
+  if (charactersColliding(player, enemy)) {
+    if (player.animationStuff.animationAvailable) {
+      player.animationStuff.animationAvailable = false;
+      player.DOMNode.classList.add("damage");
     }
   }
 }
 
+// ===================== CONTROLLER =======================
+
+
+// ===================== END OF CONTROLLER =======================
+
+// ===================== MODEL =======================
+
+// ===================== END OF MODEL =======================
+
+// ===================== VIEW =======================
+
+// ===================== END OF VIEW =======================
 function displayPlayer() {
   // Only progress the walking if there's input to move to
   if (controls.up || controls.down || controls.left || controls.right) {
-    playerInfo.animationStuff.walkTick++;
-    if (playerInfo.animationStuff.walkTick == 10) {
-      playerInfo.animationStuff.walkCycle++;
-      playerInfo.animationStuff.walkTick = 0;
+    player.animationStuff.walkTick++;
+    if (player.animationStuff.walkTick == 10) {
+      player.animationStuff.walkCycle++;
+      player.animationStuff.walkTick = 0;
     }
-    playerInfo.DOMNode.style.translate = `${playerInfo.x}px ${playerInfo.y}px`;
+    player.DOMNode.style.translate = `${player.x}px ${player.y}px`;
   } else {
-    playerInfo.animationStuff.walkCycle = 0;
+    player.animationStuff.walkCycle = 0;
   }
-  playerInfo.DOMNode.style.backgroundPosition = `${playerInfo.animationStuff.walkCycle * 100}% ${
-    playerInfo.animationStuff.characterDirection * 100
-  }%`;
+  player.DOMNode.style.backgroundPosition = `${player.animationStuff.walkCycle * 100}% ${player.animationStuff.characterDirection * 100}%`;
 }
 
 function movePlayer(deltaTime) {
   // console.log(controls);
 
-  const movement = playerInfo.speed / deltaTime;
-  const tempMove = { x: playerInfo.x, y: playerInfo.y };
+  const movement = player.speed / deltaTime;
+  const tempMove = { x: player.x, y: player.y };
   if (controls.down) {
-    playerInfo.animationStuff.characterDirection = 0;
+    player.animationStuff.characterDirection = 0;
     // playerInfo.y = playerInfo.y + movement;
-    tempMove.y = playerInfo.y + movement;
+    tempMove.y = player.y + movement;
   } else if (controls.up) {
-    playerInfo.animationStuff.characterDirection = 3;
+    player.animationStuff.characterDirection = 3;
     // playerInfo.y = playerInfo.y - movement;
-    tempMove.y = playerInfo.y - movement;
+    tempMove.y = player.y - movement;
   }
   if (controls.left) {
-    playerInfo.animationStuff.characterDirection = 2;
+    player.animationStuff.characterDirection = 2;
     // playerInfo.x = playerInfo.x - movement;
-    tempMove.x = playerInfo.x - movement;
+    tempMove.x = player.x - movement;
   }
   if (controls.right) {
-    playerInfo.animationStuff.characterDirection = 1;
+    player.animationStuff.characterDirection = 1;
     // playerInfo.x = playerInfo.x + movement;
-    tempMove.x = playerInfo.x + movement;
+    tempMove.x = player.x + movement;
   }
 
-  if (canMove(playerInfo, tempMove)) {
-    playerInfo.y = tempMove.y;
-    playerInfo.x = tempMove.x;
+  if (canMove(player, tempMove)) {
+    player.y = tempMove.y;
+    player.x = tempMove.x;
+  } else {
+    console.log("cant move");
   }
 }
 
@@ -154,11 +206,11 @@ function moveAndDisplayEnemy(deltaTime) {
 function canMove(character, newPos) {
   // Checking if the character's new position is colliding with terrain (by exceeding the borders)
   // Possible addition: Make character attributes able to determine what is a legit coordinate
-  return (
+  return !(
     boardInfo.top > newPos.y ||
-    boardInfo.bottom < playerInfo.height + newPos.y ||
+    boardInfo.bottom < player.height + newPos.y ||
     boardInfo.left > newPos.x ||
-    boardInfo.right < playerInfo.width + newPos.x
+    boardInfo.right < player.width + newPos.x
   );
 }
 
@@ -183,5 +235,87 @@ function keyPressed(event) {
     controls.left = boolValue;
   } else if (input == "d") {
     controls.right = boolValue;
+  }
+}
+
+function getTileAtCoord(coordinate) {
+  if (isValidCoord(coordinate)) {
+    return tiles[coordinate.row][coordinate.col];
+  }
+}
+
+function getTileAtPos(position) {
+  return getTileAtCoord(coordFromPos(position));
+}
+
+function coordFromPos(position) {
+  return { row: Math.floor(position.y / TILE_SIZE), col: Math.floor(position.x / TILE_SIZE) };
+}
+function posFromCoord(coordinate) {
+  return { x: coordinate.col * TILE_SIZE, y: coordinate.row * TILE_SIZE };
+}
+
+function isValidCoord(coordinate) {
+  return coordinate.row >= 0 && coordinate.row < GRID_HEIGHT && coordinate.col >= 0 && coordinate.col < GRID_WIDTH;
+}
+
+// Not needed for now since validation happens through coord
+function isValidPos(position) {}
+
+const tileNodes = [];
+function createTiles(height, width, tileSize = 32) {
+  const field = document.querySelector("#gamefield");
+  // field.
+  const parent = document.querySelector("#background");
+  parent.style.setProperty(`--GRID-WIDTH`, width);
+  for (let i = 0; i < height * width; i++) {
+    const node = document.createElement("div");
+    node.classList.add("tile");
+    // node.style.backgroundImage = "url(./assets/simple-assets/images/tiles/cliff.png)";
+    node.style.setProperty(`--TILE-SIZE`, tileSize);
+    parent.appendChild(node);
+    tileNodes.push(node);
+  }
+}
+
+function displayTiles(model, width) {
+  for (let i = 0; i < tileNodes.length; i++) {
+    const row = Math.floor(i / width);
+    const col = i % width;
+    const tile = tileNodes[i];
+    const tileValue = model[row][col];
+
+    switch (tileValue) {
+      case 0:
+        tile.classList.add("grass");
+        break;
+      case 1:
+        tile.classList.add("path");
+        break;
+      case 2:
+        tile.classList.add("water");
+        break;
+      case 3:
+        tile.classList.add("wall");
+        break;
+      case 4:
+        tile.classList.add("door");
+        break;
+      case 5:
+        tile.classList.add("planks");
+        break;
+      case 6:
+        tile.classList.add("flowers");
+        break;
+      case 7:
+        tile.classList.add("wood");
+        break;
+      case 8:
+        tile.classList.add("tree");
+        break;
+      case 9:
+        tile.classList.add("well");
+        break;
+    }
   }
 }
